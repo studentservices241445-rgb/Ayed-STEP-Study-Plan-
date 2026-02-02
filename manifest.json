@@ -1,18 +1,30 @@
 {
   "name": "أكاديمية عايد — برنامج تحديد مستوى STEP",
-  "short_name": "STEP عايد",
+  "short_name": "STEP | عايد",
+  "description": "برنامج مجاني لتحديد مستوى STEP: اختبار + تحليل + خطة + جدول PDF.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0B1220",
-  "theme_color": "#0B1220",
-  "lang": "ar",
+  "background_color": "#FFFDF7",
+  "theme_color": "#F6C343",
   "dir": "rtl",
+  "lang": "ar",
   "icons": [
     {
-      "src": "assets/icon.svg",
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

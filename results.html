@@ -1,183 +1,290 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0B1220">
-  <title>نتيجتك وخطتك — أكاديمية عايد</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="assets/styles.css">
+<title>نتيجتي وخطتي | أكاديمية عايد الرسمية</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#F6C343"/>
+  <meta name="description" content="اعرف مستواك + تحليل الأقسام + خطة وجدول مذاكرة PDF قابل للتحميل والمشاركة."/>
+  <meta property="og:title" content="النتيجة والخطة — برنامج تحديد مستوى STEP"/>
+  <meta property="og:description" content="اعرف مستواك + تحليل الأقسام + خطة وجدول مذاكرة PDF قابل للتحميل والمشاركة."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="./assets/icon-512.png"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <link rel="icon" type="image/png" href="./assets/icon-192.png"/>
+  <link rel="apple-touch-icon" href="./assets/icon-192.png"/>
+  <link rel="stylesheet" href="./assets/styles.css"/>
+
 </head>
-<body>
+<body data-page="results">
+<a class="skip-link" href="#main">تخطي إلى المحتوى</a>
+
 <header class="header">
-  <div class="container">
-    <div class="nav">
-      <a class="brand" href="index.html" aria-label="الرئيسية">
-        <div class="mark" aria-hidden="true"></div>
-        <div class="txt">
-          <b>أكاديمية عايد الرسمية</b>
-          <span>برنامج تحديد مستوى STEP (مجاني)</span>
-        </div>
-      </a>
-      <div class="actions">
-        <button class="btn iconbtn" id="menuBtn" aria-label="القائمة">☰</button>
+  <div class="container header-inner">
+    <a class="brand" href="./index.html" aria-label="العودة للرئيسية">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true">
+  <path class="icon" d="M7 17c4-8 6-10 10-10M7 17c2 0 4 2 6 2 4 0 6-4 6-8"/>
+</svg></div>
+      <div class="brand-title">
+        <b>أكاديمية عايد الرسمية</b>
+        <span>برنامج تحديد مستوى STEP</span>
       </div>
+    </a>
+
+    <nav class="nav" aria-label="روابط الموقع">
+      <a data-nav href="./index.html">الرئيسية</a>
+      <a data-nav href="./test.html">اختبار 50 سؤال</a>
+      <a data-nav href="./results.html">النتيجة والخطة</a>
+      <a data-nav href="./quiz.html">كويزات</a>
+      <a data-nav href="./support.html">الدعم</a>
+    </nav>
+
+    <div class="header-actions">
+      <button id="headerInstallBtn" class="icon-btn" title="تثبيت التطبيق" style="display:none"><svg viewBox="0 0 24 24" aria-hidden="true">
+  <path class="icon" d="M12 3v10m0 0l4-4m-4 4l-4-4M5 21h14"/>
+</svg></button>
+      <button id="menuBtn" class="icon-btn" title="القائمة"><svg viewBox="0 0 24 24" aria-hidden="true">
+  <path class="icon" d="M4 7h16M4 12h16M4 17h16"/>
+</svg></button>
     </div>
   </div>
 </header>
 
-<div class="drawer" id="drawer" aria-hidden="true">
-  <div class="panel">
-    <div class="top">
-      <b>القائمة</b>
-      <button class="btn small" id="drawerClose">إغلاق</button>
-    </div>
-    <a href="index.html">الرئيسية</a>
-    <a href="test.html">ابدأ الاختبار</a>
-    <a href="results.html">النتيجة والخطة</a>
-    <a href="quiz.html">كويزات سريعة</a>
-    <a href="progress.html">سجلّي</a>
-    <a href="faq.html">الأسئلة الشائعة</a>
-    <a href="support.html">الدعم</a>
-    <a href="privacy.html">الخصوصية</a>
-    <a href="terms.html">الشروط</a>
-  </div>
-</div>
-
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-<div class="pop" id="pop" aria-live="polite"><div class="box"></div><div class="meta"></div></div>
-
-<button class="chatfab" id="chatFab" aria-label="مساعد أكاديمية عايد">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3H4a2 2 0 0 0-2 2v14l4-3h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/></svg>
-</button>
-<div class="chatpanel" id="chatPanel" aria-hidden="true">
-  <div class="head">
-    <div><b id="chatTitle">مساعد</b><span id="chatStatus">متصل</span></div>
-    <button class="btn small" id="chatClose">إغلاق</button>
-  </div>
-  <div class="body">
-    <div class="chatlog" id="chatLog"></div>
-    <div class="quickchips" id="chatChips"></div>
-    <div class="chatrow">
-      <input class="input" id="chatInput" placeholder="اكتب سؤالك هنا…" />
-      <button class="btn gold" id="chatSend">إرسال</button>
-    </div>
-  </div>
-</div>
-
-<script src="assets/site-data.js"></script>
-<script src="assets/app.js"></script>
-
-<main class="container" style="padding:16px 0 20px">
-  <div class="card pad hidden" id="emptyState">
-    <b>لا توجد نتيجة محفوظة</b>
-    <p class="p" style="margin-top:6px">ابدأ الاختبار أولاً ثم ارجع هنا.</p>
-    <a class="btn gold" href="test.html">ابدأ الاختبار</a>
-  </div>
-
-  <div id="content" class="hidden">
-    <div class="card pad">
-      <div class="badge">تحليل + خطة + جدول</div>
-      <h1 class="h2">هلا <span id="name">—</span> 👋 هذه نتيجتك وخطتك</h1>
-
-      <div class="grid three" style="margin-top:12px">
-        <div class="kpi"><div class="dot"></div><div><b id="score">—%</b><span>النسبة العامة</span></div></div>
-        <div class="kpi"><div class="dot"></div><div><b id="level">—</b><span>مستوى مقترح</span></div></div>
-        <div class="kpi"><div class="dot"></div><div><b id="correct">—</b><span>الصحيح من 50</span></div></div>
+<div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true"></div>
+<aside id="drawer" class="drawer" aria-label="القائمة الجانبية">
+  <div class="drawer-top">
+    <div class="brand" style="min-width:auto">
+      <div class="brand-mark" style="width:38px;height:38px"><svg viewBox="0 0 24 24" aria-hidden="true">
+  <path class="icon" d="M7 17c4-8 6-10 10-10M7 17c2 0 4 2 6 2 4 0 6-4 6-8"/>
+</svg></div>
+      <div class="brand-title">
+        <b>البرنامج</b>
+        <span>مجاني • يعمل كتطبيق</span>
       </div>
+    </div>
+    <button id="drawerClose" class="icon-btn" title="إغلاق"><svg viewBox="0 0 24 24" aria-hidden="true">
+  <path class="icon" d="M4 7h16M4 12h16M4 17h16"/>
+</svg></button>
+  </div>
 
-      <div class="grid two" style="margin-top:12px">
-        <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
-          <b>تركيزك الأساسي</b>
-          <div class="p" style="margin-top:6px">الأولوية: <b id="focus">—</b></div>
-          <div class="p">موعد اختبارك: <b id="whenExam">—</b></div>
-          <div class="p hidden" id="bookingHint"></div>
+  <a href="./index.html">الرئيسية</a>
+  <a href="./test.html">اختبار 50 سؤال</a>
+  <a href="./results.html">النتيجة والخطة</a>
+  <a href="./quiz.html">كويزات قابلة للمشاركة</a>
+  <a href="./progress.html">سجلّي</a>
+  <a href="./support.html">الدعم</a>
+
+  <small class="muted">ملاحظة: النتائج تُحفظ على جهازك فقط (بدون حسابات).</small>
+</aside>
+
+
+<main id="main" class="container">
+  <section id="noResult" class="card pad section" style="display:none">
+    <h1 style="margin:0 0 8px">ما لقينا نتيجة محفوظة</h1>
+    <p class="muted" style="margin:0; line-height:1.8">
+      يبدو أنك ما سويت الاختبار الكامل في هذا الجهاز، أو مسحت البيانات.
+    </p>
+    <div class="hero-actions" style="margin-top:14px">
+      <a class="btn" href="./test.html">ابدأ اختبار 50 سؤال</a>
+      <a class="btn secondary" href="./quiz.html">سوي كويز</a>
+    </div>
+  </section>
+
+  <div id="resultWrap">
+    <nav class="subnav">
+      <div class="card subnav-inner">
+        <a href="#summary">الملخص</a>
+        <a href="#analysis">تحليل الأقسام</a>
+        <a href="#plan">الخطة</a>
+        <a href="#schedule">الجدول</a>
+        <a href="#share">مشاركة</a>
+      </div>
+    </nav>
+
+    <section id="summary" class="card pad section">
+      <div class="section-title">
+        <h2>ملخص نتيجتك</h2>
+        <span class="badge">مؤشر تدريبي • يحفظ على جهازك</span>
+      </div>
+      <div class="row-2">
+        <div class="card pad">
+          <b>الاسم</b>
+          <div id="rName" style="margin-top:6px; font-weight:900; font-size:16px">—</div>
+          <div class="muted" id="rDate" style="margin-top:6px">—</div>
         </div>
-        <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
-          <b>أزرار سريعة</b>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-            <a class="btn" href="#analysis">التحليل</a>
-            <a class="btn" href="#plan">الخطة</a>
-            <a class="btn" href="#table">الجدول</a>
-            <a class="btn" href="#share">المشاركة</a>
+        <div class="card pad">
+          <b>المؤشر العام</b>
+          <div style="display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap">
+            <span class="badge"><span class="dot"></span><span id="rLevel">—</span></span>
+            <span class="badge">النتيجة: <b id="rPct">—</b></span>
+          </div>
+          <div class="muted" style="margin-top:10px; line-height:1.8">
+            ملاحظة: النتيجة هنا تدريبية (مؤشر مستوى) وليست درجة رسمية.
           </div>
         </div>
       </div>
 
-      <hr class="sep">
-      <div id="analysis"></div>
-      <h2 class="h2">تحليل الأقسام</h2>
-      <div id="bars" class="grid two"></div>
+      <div class="card pad" style="margin-top:12px; background:rgba(246,195,67,.12)">
+        <b>خلاصة التحليل</b>
+        <div id="focusText" class="muted" style="margin-top:6px; line-height:1.8">—</div>
+      </div>
+    </section>
 
-      <hr class="sep">
-      <div id="plan"></div>
-      <h2 class="h2">الخطة (نص جاهز)</h2>
-      <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)"><pre id="planText" style="margin:0;white-space:pre-wrap;font-family:inherit;color:var(--text)"></pre></div>
+    <section id="analysis" class="section">
+      <div class="section-title">
+        <h2>تحليل الأقسام</h2>
+        <span class="badge">نسبة كل قسم</span>
+      </div>
+      <div id="bars" class="stat-row"></div>
+    </section>
 
-      <hr class="sep">
-      <div id="table"></div>
-      <h2 class="h2">جدول مذاكرة يومي</h2>
-      <table class="table"><thead><tr><th>اليوم</th><th>الوقت</th><th>المهمة</th></tr></thead><tbody id="planTbody"></tbody></table>
-
-      <hr class="sep">
-      <div id="share"></div>
-      <h2 class="h2">مشاركة وتحميل</h2>
-      <div class="grid two">
-        <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
-          <b>مشاركة الخطة</b>
-          <div class="p" style="margin-top:6px">رسالة جاهزة (بدون روابط دورات) — فقط رابط البرنامج.</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-            <button class="btn gold" id="sharePlan">مشاركة</button>
-            <button class="btn" id="copyPlan">نسخ النص</button>
-          </div>
-        </div>
-        <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
-          <b>تحميل PDF</b>
-          <div class="p" style="margin-top:6px">ينفتح لك ملف جاهز للطباعة — اختر Save as PDF.</div>
-          <button class="btn gold" id="downloadPdf" style="margin-top:10px">تحميل PDF</button>
-        </div>
+    <section id="plan" class="card pad section">
+      <div class="section-title">
+        <h2>الخطة المقترحة</h2>
+        <span class="badge" id="timelineTitle">—</span>
       </div>
 
-      
-      <hr class="sep">
-      <h2 class="h2">الخطوة الجاية (اختياري)</h2>
-      <div class="grid two">
-        <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
-          <b>إذا تبغى تمشي بخطة منظمة داخل دورة</b>
-          <div class="p" style="margin-top:6px">تقدر تفتح موقع التسجيل — وبعد التسجيل الصق خطتك داخل النموذج عشان نعرف احتياجك.</div>
-          <a class="btn gold" id="courseCta" href="https://ayedacademy2026.github.io/ayed-step-academy2026/" target="_blank" rel="noopener">فتح موقع الدورة المكثفة</a>
-        </div>
-        <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
-          <b>بدون اشتراك؟</b>
-          <div class="p" style="margin-top:6px">خلك على جدولك هنا + كويزات يومية. أهم شيء الاستمرار.</div>
-          <a class="btn" href="quiz.html">ابدأ كويز يومي</a>
+      <div class="card pad" style="background:rgba(28,124,84,.08)">
+        <b>نصيحة مهمة حسب موعدك</b>
+        <div id="bookingAdvice" class="muted" style="margin-top:6px; line-height:1.8">—</div>
+      </div>
+
+      <div id="extraBox" class="card pad" style="display:none; margin-top:12px; background:rgba(11,18,32,.04)">
+        <b>موارد إضافية</b>
+        <div class="muted" style="margin-top:6px">اختياري — إذا فعلتها من الإعدادات.</div>
+        <div style="margin-top:10px">
+          <button id="extraBtn" class="btn small secondary" type="button">فتح الموارد</button>
         </div>
       </div>
-<hr class="sep">
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" id="shareProgram">مشاركة البرنامج</button>
-        <a class="btn ghost" href="quiz.html">سوّي كويز تدريب</a>
-        <a class="btn ghost" href="test.html">الاختبار الكامل (بعد 24 ساعة)</a>
+    </section>
+
+    <section id="schedule" class="card pad section">
+      <div class="section-title">
+        <h2>جدول مذاكرة جاهز</h2>
+        <span class="badge" id="scheduleSummary">—</span>
       </div>
-    </div>
+
+      <div style="overflow:auto">
+        <table class="table" aria-label="جدول المذاكرة">
+          <thead>
+            <tr>
+              <th class="col-day">اليوم</th>
+              <th>المهام</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+
+      <div class="hero-actions" style="margin-top:12px">
+        <button id="weakQuizBtn" class="btn secondary" type="button">سوي كويز للأضعف</button>
+        <button id="pdfBtn" class="btn" type="button">تحميل PDF (طباعة)</button>
+      </div>
+    </section>
+
+    <section id="share" class="card pad section">
+      <div class="section-title">
+        <h2>مشاركة (تسويق محترم)</h2>
+        <span class="badge">رسائل جاهزة</span>
+      </div>
+      <p class="muted" style="margin:0; line-height:1.8">
+        تقدر تشارك خطتك أو تنسخها… بدون أي روابط دورات — فقط رابط البرنامج.
+      </p>
+
+      <div class="hero-actions" style="margin-top:12px">
+        <button id="sharePlanBtn" class="btn" type="button">شارك خطتي برسالة جاهزة</button>
+        <button id="copyPlanBtn" class="btn secondary" type="button">نسخ مختصر الخطة</button>
+      </div>
+
+      <div class="card pad" style="margin-top:12px; background:rgba(11,18,32,.04)">
+        <b>معلومة</b>
+        <div class="muted" style="margin-top:6px; line-height:1.8">
+          إذا فتحت الخطة PDF من الكمبيوتر: اختر Print → Save as PDF.
+        </div>
+      </div>
+    </section>
   </div>
 </main>
-<script src="assets/results.js"></script>
-<footer class="footer">
-  <div class="container">
-    <div class="row">
-      <div>
-        <b>أكاديمية عايد الرسمية</b>
-        <div style="margin-top:6px">© 2026 — برنامج مجاني لتنظيم خطة STEP</div>
+
+
+<footer>
+  <div class="container footer-grid">
+    <div>
+      <b>أكاديمية عايد الرسمية — برنامج تحديد مستوى STEP</b>
+      <div class="muted" style="margin-top:8px; line-height:1.8">
+        برنامج مجاني يساعدك تحدد مستواك وتطلع بخطة وجدول مذاكرة جاهز.
+        النتائج تُحفظ على جهازك فقط (بدون إنشاء حساب).
       </div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap">
-        <a href="faq.html">الأسئلة الشائعة</a>
-        <a href="support.html">الدعم</a>
-        <a href="privacy.html">الخصوصية</a>
-        <a href="terms.html">الشروط</a>
+      <div class="muted" style="margin-top:10px">© <span id="year"></span></div>
+    </div>
+    <div>
+      <div class="footer-links">
+        <a href="./quiz.html">كويزات</a>
+        <a href="./progress.html">سجلّي</a>
+        <a href="./support.html">الدعم</a>
+        <a href="./privacy.html">الخصوصية</a>
+        <a href="./terms.html">الشروط</a>
       </div>
     </div>
   </div>
 </footer>
+
+
+<div id="toastWrap" class="toast-wrap" aria-live="polite" aria-atomic="true">
+  <div id="toastBox" class="toast" role="status">
+    <div>
+      <p id="toastText" class="t">...</p>
+    </div>
+    <div class="x">
+      <button id="toastClose" type="button" aria-label="إغلاق">✕</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="installBanner" class="install">
+  <div class="inner">
+    <div>
+      <p>ثبّت البرنامج كتطبيق ✅</p>
+      <small>يشتغل بدون متصفح ويصير أسرع.</small>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center">
+      <button id="installBtn" class="btn small" type="button">تثبيت</button>
+      <button id="installClose" class="btn small ghost" type="button">لاحقًا</button>
+    </div>
+  </div>
+</div>
+
+
+<button id="assistBtn" class="assist-btn" aria-label="فتح المساعد"><svg viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.4 0-2.8-.3-4-.8L3 21l1.9-5.5c-.5-1.2-.9-2.5-.9-4A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/>
+</svg></button>
+
+<section id="chat" class="chat" aria-label="مساعد أكاديمية عايد">
+  <div class="chat-head">
+    <div class="info">
+      <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true">
+  <path class="icon" d="M7 17c4-8 6-10 10-10M7 17c2 0 4 2 6 2 4 0 6-4 6-8"/>
+</svg></div>
+      <div>
+        <b>مساعد أكاديمية عايد</b>
+        <small id="chatSubtitle">متصل الآن</small>
+      </div>
+    </div>
+    <button id="chatClose" class="icon-btn" title="إغلاق" aria-label="إغلاق">✕</button>
+  </div>
+  <div id="chatBody" class="chat-body"></div>
+  <div class="chat-foot">
+    <input id="chatInput" type="text" placeholder="اكتب سؤالك هنا…"/>
+    <button id="chatSend" class="btn small" type="button">إرسال</button>
+  </div>
+</section>
+
+
+
+<script src="./assets/site-data.js"></script>
+<script src="./assets/app.js"></script>
+
+<script src="./assets/results.js"></script>
 </body>
 </html>
