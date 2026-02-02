@@ -1,31 +1,89 @@
-// assets/progress.js (v3)
 (() => {
-  const $ = (s, r=document) => r.querySelector(s);
-  const histKey='ayed_step_history_v3';
-  const cooldownKey='ayed_step_cooldown_v3';
-  const cooldownHours=window.AYED.CONFIG.test.cooldownHours;
-  function fmtDate(ts){ return new Date(ts).toLocaleString('ar',{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
-  function remaining(){ const t=Number(localStorage.getItem(cooldownKey)||0); return Math.max(0,(t+cooldownHours*3600*1000)-Date.now()); }
-  function render(){
-    const list=(()=>{try{return JSON.parse(localStorage.getItem(histKey)||'[]');}catch(e){return [];} })();
-    const wrap=$('#history'); wrap.innerHTML='';
-    if(!list.length) wrap.innerHTML=`<div class="card pad"><b>لا يوجد سجل حتى الآن.</b><div class="p" style="margin-top:6px">ابدأ الاختبار من صفحة الاختبار.</div></div>`;
-    else list.forEach(it=>{
-      const c=document.createElement('div'); c.className='card pad';
-      c.innerHTML=`<b>${it.level} • ${it.scorePct}%</b><div style="color:var(--muted2);font-size:12.5px;margin-top:4px">${fmtDate(it.at)}</div><div style="color:var(--muted);margin-top:8px">التركيز: <b>${it.focus||'-'}</b> • خطة: ${it.planDays||'-'} يوم</div>`;
-      wrap.appendChild(c);
-    });
-    const rem=remaining();
-    $('#cooldownBox').classList.toggle('hidden', rem===0);
-    if(rem>0) $('#cooldownTime').textContent=window.AYED_UTILS.fmtTime(rem);
+  const Core = window.AYED?.Core;
+  if(!Core) return;
+  const { $, storage, toast } = Core;
+
+  function formatDate(iso){
+    try{
+      const d = new Date(iso);
+      return d.toLocaleString("ar-SA", { year:"numeric", month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
+    }catch(e){ return iso; }
   }
-  document.addEventListener('DOMContentLoaded', ()=>{
-    render();
-    $('#clearAll').addEventListener('click', ()=>{
-      if(!confirm('متأكد؟ سيتم مسح كل البيانات من هذا الجهاز.')) return;
-      ['ayed_step_history_v3','ayed_step_result_v3','ayed_step_user_v3','ayed_step_cooldown_v3','ayed_step_progress_v3'].forEach(k=>localStorage.removeItem(k));
-      window.AYED_UTILS.toast('تم المسح ✅');
-      render();
+
+  function render(){
+    const list = $("#history");
+    const hist = storage.get("results_history", []);
+    if(!hist.length){
+      $("#empty").style.display="block";
+      $("#wrap").style.display="none";
+      return;
+    }
+    $("#empty").style.display="none";
+    $("#wrap").style.display="block";
+
+    list.innerHTML = "";
+    hist.forEach((r, idx)=>{
+      const card = document.createElement("div");
+      card.className = "card pad";
+      const name = r.profile?.name || "—";
+      const pct = r.score?.pct ?? 0;
+      const level = r.score?.level || "—";
+      card.innerHTML = `
+        <div class="section-title">
+          <h2>${name} — ${pct}%</h2>
+          <span class="badge"><span class="dot"></span>${level}</span>
+        </div>
+        <div class="muted">تاريخ: ${formatDate(r.createdAt)}</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px">
+          <button class="btn small" data-open="${idx}">فتح النتيجة</button>
+          <button class="btn small secondary" data-make-last="${idx}">تعيين كآخر نتيجة</button>
+        </div>
+      `;
+      list.appendChild(card);
     });
-  });
+
+    list.querySelectorAll("[data-open]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const i = Number(btn.getAttribute("data-open"));
+        const hist = storage.get("results_history", []);
+        const r = hist[i];
+        if(r){
+          storage.set("last_result", r);
+          window.location.href = "./results.html";
+        }
+      });
+    });
+
+    list.querySelectorAll("[data-make-last]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const i = Number(btn.getAttribute("data-make-last"));
+        const hist = storage.get("results_history", []);
+        const r = hist[i];
+        if(r){
+          storage.set("last_result", r);
+          toast("تم ✅");
+        }
+      });
+    });
+
+    $("#clearAll").addEventListener("click", ()=>{
+      if(!confirm("متأكد؟ سيتم مسح النتائج والبيانات من هذا الجهاز فقط.")) return;
+      try{
+        // remove all keys under prefix
+        const prefix = storage.prefix;
+        const keys = [];
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(k && k.startsWith(prefix)) keys.push(k);
+        }
+        keys.forEach(k=>localStorage.removeItem(k));
+        toast("تم مسح البيانات ✅");
+        window.setTimeout(()=>location.reload(), 400);
+      }catch(e){
+        toast("صار خطأ أثناء المسح.");
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", render);
 })();

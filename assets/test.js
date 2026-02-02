@@ -1,233 +1,508 @@
-// assets/test.js (v3) — 50 سؤال + تصحيح فوري + شرح + محاولة كل 24 ساعة
 (() => {
-  const $ = (s, r=document) => r.querySelector(s);
-  const $$ = (s, r=document) => [...r.querySelectorAll(s)];
-  const CFG = window.AYED.CONFIG;
-  const LS = { user:'ayed_step_user_v3', result:'ayed_step_result_v3', cooldown:'ayed_step_cooldown_v3', progress:'ayed_step_progress_v3', history:'ayed_step_history_v3' };
-  const dist = { Grammar:18, Vocabulary:14, Reading:14, Listening:4 };
+  const CFG = window.AYED?.CONFIG;
+  const Core = window.AYED?.Core;
+  if(!CFG || !Core) return;
 
-  function loadJSON(path){ return fetch(path,{cache:'no-store'}).then(r=>r.json()); }
-  function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-  function cooldownRemaining(){ const t=Number(localStorage.getItem(LS.cooldown)||0); return Math.max(0,(t+CFG.test.cooldownHours*3600*1000)-Date.now()); }
-  function setCooldownNow(){ localStorage.setItem(LS.cooldown,String(Date.now())); }
-  function saveProgress(p){ localStorage.setItem(LS.progress,JSON.stringify(p)); }
-  function loadProgress(){ try{return JSON.parse(localStorage.getItem(LS.progress)||'null');}catch(e){return null;} }
-  function clearProgress(){ localStorage.removeItem(LS.progress); }
-  function setUser(u){ localStorage.setItem(LS.user,JSON.stringify(u)); }
-  function getUser(){ try{return JSON.parse(localStorage.getItem(LS.user)||'null');}catch(e){return null;} }
-  function setResult(r){
-    localStorage.setItem(LS.result,JSON.stringify(r));
-    const hist=(()=>{try{return JSON.parse(localStorage.getItem(LS.history)||'[]');}catch(e){return [];} })();
-    hist.unshift({at:r.at,scorePct:r.scorePct,level:r.level.label,focus:r.focus,planDays:r.planDays});
-    localStorage.setItem(LS.history,JSON.stringify(hist.slice(0,30)));
-  }
-  function levelFor(p){ if(p>=85) return {code:'ADV',label:'متقدم'}; if(p>=65) return {code:'INT',label:'متوسط'}; return {code:'BEG',label:'مبتدئ'}; }
-  function sectionArabic(s){ return ({Grammar:'القواعد',Vocabulary:'المفردات',Reading:'القراءة',Listening:'الاستماع'}[s]||s); }
+  const { $, $$, storage, toast, formatMs } = Core;
 
-  function ensureConditionalFields(){
-    const tested=$('#testedBefore'), prevWrap=$('#prevScoreWrap'), targetWrap=$('#targetScoreWrap');
-    tested.addEventListener('change',()=>{ const yes=tested.value==='yes'; prevWrap.classList.toggle('hidden',!yes); targetWrap.classList.toggle('hidden',!yes); if(!yes){$('#prevScore').value='';$('#targetScore').value='';}});
-    tested.dispatchEvent(new Event('change'));
-    const edu=$('#eduStage'), uniWrap=$('#uniWrap'); edu.addEventListener('change',()=>uniWrap.classList.toggle('hidden',edu.value!=='university')); edu.dispatchEvent(new Event('change'));
-    const weak=$('#weakGuess'), note=$('#weakNote'); weak.addEventListener('change',()=>note.classList.toggle('hidden',weak.value!=='auto')); weak.dispatchEvent(new Event('change'));
+  const cooldownMs = (CFG.test.fullTestCooldownHours || 24) * 3600 * 1000;
+
+  // Elements
+  const wizard = $("#wizard");
+  const steps = $$(".step-pane");
+  const stepper = $("#stepper");
+  const nextBtn = $("#nextStep");
+  const prevBtn = $("#prevStep");
+  const startBtn = $("#startTestBtn");
+  const cooldownBox = $("#cooldownBox");
+  const cooldownText = $("#cooldownText");
+
+  const testShell = $("#testShell");
+  const qPrompt = $("#qPrompt");
+  const qMeta = $("#qMeta");
+  const optionsWrap = $("#optionsWrap");
+  const feedback = $("#feedback");
+  const fbTitle = $("#fbTitle");
+  const fbDesc = $("#fbDesc");
+  const nextQBtn = $("#nextQBtn");
+  const prevQBtn = $("#prevQBtn");
+  const finishBtn = $("#finishBtn");
+  const progressBar = $("#progressBarInner");
+  const qNavGrid = $("#qNavGrid");
+
+  const toggleInstantWizard = $("#toggleInstantWizard");
+  const toggleExplainWizard = $("#toggleExplainWizard");
+  const toggleInstantTest = $("#toggleInstantTest");
+  const toggleExplainTest = $("#toggleExplainTest");
+
+  let profile = {};
+  let bank = null;
+
+  // Test state
+  let state = null; // { seed, questionIds, answers, idx, settings }
+  let selected = []; // question objects
+
+  // ----- Utils -----
+  function now(){ return Date.now(); }
+
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+  function mulberry32(seed){
+    return function() {
+      let t = seed += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
   }
 
-  function pick(bank, per){
-    const by = (sec)=> shuffle(bank.filter(q=>q.section===sec)).slice(0, dist[sec]);
-    const set=[...by('Grammar'),...by('Vocabulary'),...by('Reading'),...by('Listening')];
-    shuffle(set); return set.slice(0, per);
-  }
-  function getPlanDays(w){ if(w==='24h') return 1; if(w==='3d') return 3; if(w==='7d') return 7; if(w==='30d') return 30; if(w==='not_booked') return 60; return 30; }
-  function breakdown(picked, ans){
-    const b={}; picked.forEach((q,i)=>{ b[q.section]=b[q.section]||{total:0,correct:0}; b[q.section].total++; if(ans[i]===q.correctIndex) b[q.section].correct++; }); return b;
-  }
-  function focusFrom(b){
-    const arr=Object.entries(b).map(([k,v])=>[k,Math.round((v.correct/Math.max(1,v.total))*100)]); arr.sort((a,b)=>a[1]-b[1]);
-    return arr.slice(0,2).map(x=>sectionArabic(x[0])).join(' + ');
-  }
-  function planText(user, focus, days){
-    const name=user.fullName||'يا بطل', mins=user.studyMinutes||'30-60', best=user.bestTime||'حسب وقتك';
-    const L=[]; L.push(`يا ${name} 🌟`); L.push(`هذه خطة ${days} يوم — تركيزنا الأساسي: ${focus}`); L.push(`وقت مذاكرتك: ${mins} • الوقت المفضّل: ${best}`); L.push('');
-    if(days<=1){ L.push('**خطة إنقاذ (24 ساعة)**'); L.push('- 60د: قواعد + أخطاء شائعة.'); L.push('- 90د: قراءة (قطعتين) بتوقيت.'); L.push('- 45د: استماع + تلخيص.'); L.push('- 30د: مفردات ربط (however/although).'); }
-    else if(days<=3){ L.push('**خطة 3 أيام**'); L.push('اليوم 1: قواعد + 30 سؤال.'); L.push('اليوم 2: قراءة + مفردات.'); L.push('اليوم 3: استماع + مراجعة أخطاء.'); }
-    else if(days<=7){ L.push('**خطة 7 أيام**'); L.push('1–2: قواعد + تثبيت.'); L.push('3–4: قراءة بتوقيت.'); L.push('5: استماع.'); L.push('6: كويزات + أخطاء.'); L.push('7: مراجعة + نوم بدري.'); }
-    else if(days<=30){ L.push('**خطة 30 يوم**'); L.push('الأسبوع 1: تأسيس وتنظيم.'); L.push('الأسبوع 2: قواعد.'); L.push('الأسبوع 3: قراءة + مفردات.'); L.push('الأسبوع 4: استماع + نماذج.'); }
-    else { L.push('**خطة 60 يوم**'); L.push('الشهر 1: تأسيس ببطء + تمارين قصيرة يوميًا.'); L.push('الشهر 2: نماذج + مراجعة أخطاء + تكرار.'); L.push('نصيحة: احجز بعد ما تثبت أسبوعين على الخطة.'); }
-    return L.join('\n');
-  }
-  function buildTable(days, user){
-    const mins=user.studyMinutes||'30-60', best=user.bestTime||'أي وقت';
-    const rows=[]; for(let d=1; d<=days; d++){
-      let task='مراجعة عامة + كويز (10 أسئلة)';
-      if(d%4===1) task='قواعد: If + أزمنة + 20 سؤال';
-      if(d%4===2) task='قراءة: قطعة + أسئلة (بتوقيت)';
-      if(d%4===3) task='مفردات: 25 كلمة + ربط';
-      if(d%7===0) task='مراجعة أسبوعية + تلخيص أخطاء';
-      rows.push({day:d,time:`${mins} (${best})`,task});
+  function pickRandom(arr, n, rng){
+    const a = arr.slice();
+    // Fisher-Yates
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(rng()*(i+1));
+      [a[i], a[j]] = [a[j], a[i]];
     }
-    return rows;
+    return a.slice(0, n);
   }
 
-  async function run(){
-    const locked=document.getElementById('lockedState');
-    const remain=cooldownRemaining();
-    if(remain>0){ locked.style.display='block'; locked.querySelector('#cooldownTime').textContent=window.AYED_UTILS.fmtTime(remain); }
+  function loadProfile(){
+    return storage.get("profile", {});
+  }
+  function saveProfile(p){
+    storage.set("profile", p);
+  }
 
-    ensureConditionalFields();
-    const bank=await loadJSON('assets/questions.json');
-    bank.forEach(q=>{ if(!['Grammar','Vocabulary','Reading','Listening'].includes(q.section)) q.section='Grammar'; });
+  function readForm(){
+    const v = (id) => ($(id)?.value || "").trim();
+    const checked = (name) => {
+      const el = document.querySelector(`input[name="${name}"]:checked`);
+      return el ? el.value : "";
+    };
+    const multi = (name) => $$( `input[name="${name}"]:checked`).map(x => x.value);
 
-    const startCard=$('#startCard'), testCard=$('#testCard'), resumeBtn=$('#resumeTest'), form=$('#infoForm');
-    const qIndex=$('#qIndex'), qTotal=$('#qTotal'), qSection=$('#qSection'), qPrompt=$('#qPrompt');
-    const bar=$('#bar'), options=$('#options'), explain=$('#explain'), feedback=$('#feedback');
-    const prevBtn=$('#prevQ'), nextBtn=$('#nextQ'), finishBtn=$('#finishTest');
-    const toggleExplain=$('#toggleExplain'), toggleFeedback=$('#toggleFeedback');
-    const gridWrap=$('#qGridWrap'), qGrid=$('#qGrid');
+    const p = {
+      name: v("#name"),
+      goal: checked("goal"),
+      region: v("#region"),
+      heardFrom: checked("heardFrom"),
+      purpose: checked("purpose"),
+      examTimeline: checked("examTimeline"),
+      minutesPerDay: Number(checked("minutesPerDay") || 30),
+      preferredTime: checked("preferredTime"),
+      workSchedule: checked("workSchedule"),
+      educationStage: checked("educationStage"),
+      universityDetails: v("#uniDetails"),
+      major: v("#major"),
+      learningStyle: checked("learningStyle"),
+      weakGuess: checked("weakGuess"),
+      triedBefore: checked("triedBefore"),
+      previousScore: Number(v("#previousScore") || 0),
+      targetScore: Number(v("#targetScore") || 0),
+      previousCourses: multi("previousCourses"),
+      coursePain: v("#coursePain"),
+      notes: v("#notes")
+    };
 
-    let state={picked:null,answers:[],idx:0,showExplain:true,showFeedback:true};
+    // Basic validation fallback
+    if(!p.name) p.name = "صديقنا";
+    if(!p.examTimeline) p.examTimeline = "noBooking";
+    if(!p.minutesPerDay) p.minutesPerDay = 30;
+    return p;
+  }
 
-    function renderGrid(){
-      gridWrap.classList.remove('hidden');
-      qGrid.innerHTML='';
-      for(let i=0;i<state.picked.length;i++){
-        const b=document.createElement('div'); b.className='qnum';
-        if(i===state.idx) b.classList.add('cur');
-        if(state.answers[i]!==null) b.classList.add('ans');
-        b.textContent=String(i+1);
-        b.addEventListener('click',()=>{state.idx=i; render(); save();});
-        qGrid.appendChild(b);
+  function showStep(i){
+    steps.forEach((s,idx) => s.style.display = (idx===i ? "block" : "none"));
+    const pills = $$(".step");
+    pills.forEach((p,idx) => p.classList.toggle("active", idx===i));
+    prevBtn.style.display = (i===0 ? "none" : "inline-flex");
+    nextBtn.style.display = (i===steps.length-1 ? "none" : "inline-flex");
+    startBtn.style.display = (i===steps.length-1 ? "inline-flex" : "none");
+  }
+
+  function initStepper(){
+    if(!stepper) return;
+    const labels = ["بياناتك", "موعدك", "تفضيلاتك", "خلفيتك", "جاهز؟"];
+    stepper.innerHTML = labels.map((t,idx)=>`<span class="step ${idx===0?'active':''}">${t}</span>`).join("");
+  }
+
+  function cooldownRemaining(){
+    const last = storage.get("last_full_test_at", 0);
+    if(!last) return 0;
+    const rem = (last + cooldownMs) - now();
+    return rem > 0 ? rem : 0;
+  }
+
+  function updateCooldownUI(){
+    const rem = cooldownRemaining();
+    if(rem <= 0){
+      if(cooldownBox) cooldownBox.style.display = "none";
+      if(startBtn) startBtn.disabled = false;
+      return;
+    }
+    if(cooldownBox) cooldownBox.style.display = "block";
+    if(cooldownText) cooldownText.textContent = `تقدر تسوي الاختبار الكامل بعد: ${formatMs(rem)} (محاولة واحدة كل 24 ساعة)`;
+    if(startBtn) startBtn.disabled = true;
+  }
+
+  async function loadBank(){
+    if(bank) return bank;
+    const res = await fetch("./assets/questions.json", { cache: "no-store" });
+    const j = await res.json();
+    bank = j.questions || [];
+    return bank;
+  }
+
+  function chooseQuestions(all, quotas, seed){
+    const rng = mulberry32(seed);
+
+    // Difficulty preference based on last score
+    const last = storage.get("last_result", null);
+    let minD = 2, maxD = 4;
+    if(last?.score?.pct >= 80){ minD = 3; maxD = 5; }
+    else if(last?.score?.pct <= 40){ minD = 1; maxD = 3; }
+
+    const within = (q) => (q.difficulty>=minD && q.difficulty<=maxD);
+
+    const chosen = [];
+    for(const [section, count] of Object.entries(quotas)){
+      const pool = all.filter(q => q.section === section && within(q));
+      const pick = pickRandom(pool.length?pool:all.filter(q=>q.section===section), count, rng);
+      chosen.push(...pick);
+    }
+    // Shuffle overall
+    return pickRandom(chosen, chosen.length, rng);
+  }
+
+  function persistState(){
+    storage.set("current_test_state", state);
+  }
+
+  function clearState(){
+    storage.del("current_test_state");
+  }
+
+  function loadState(){
+    return storage.get("current_test_state", null);
+  }
+
+  function renderNav(){
+    if(!qNavGrid) return;
+    qNavGrid.innerHTML = "";
+    for(let i=0;i<selected.length;i++){
+      const btn = document.createElement("button");
+      btn.type="button";
+      btn.className = "qn";
+      btn.textContent = String(i+1);
+      btn.addEventListener("click", ()=> goTo(i));
+      qNavGrid.appendChild(btn);
+    }
+    updateNavStyles();
+  }
+
+  function updateNavStyles(){
+    const btns = $$(".qn", qNavGrid);
+    btns.forEach((b,i)=>{
+      b.classList.toggle("current", i===state.idx);
+      const a = state.answers[i];
+      const q = selected[i];
+      const instant = state.settings.instantCheck;
+      b.classList.toggle("answered", a!==null && a!==undefined && (instant ? a===q.correctIndex : true));
+      b.classList.toggle("wrong", instant && a!==null && a!==undefined && a!==q.correctIndex);
+    });
+  }
+
+  function setProgress(){
+    const pct = Math.round(((state.idx+1)/selected.length)*100);
+    if(progressBar) progressBar.style.width = pct + "%";
+  }
+
+  function syncToggles(){
+    if(toggleInstantTest) toggleInstantTest.checked = !!state.settings.instantCheck;
+    if(toggleExplainTest) toggleExplainTest.checked = !!state.settings.showExplain;
+  }
+
+  function renderQuestion(){
+    const q = selected[state.idx];
+    if(!q) return;
+
+    syncToggles();
+
+    if(qMeta) qMeta.innerHTML = `<small>سؤال ${state.idx+1} من ${selected.length}</small> <span class="badge"><span class="dot"></span>${q.section} • ${q.topic}</span>`;
+    if(qPrompt) qPrompt.textContent = q.prompt;
+
+    optionsWrap.innerHTML = "";
+    feedback.classList.remove("show");
+
+    const answered = state.answers[state.idx];
+    const instant = state.settings.instantCheck;
+    const showExplain = state.settings.showExplain;
+
+    q.options.forEach((opt, optIdx) => {
+      const btn = document.createElement("button");
+      btn.type="button";
+      btn.className="opt";
+      btn.textContent = opt;
+      btn.disabled = answered!==null && answered!==undefined; // lock after answer
+      btn.addEventListener("click", ()=> chooseAnswer(optIdx));
+      optionsWrap.appendChild(btn);
+    });
+
+    // If answered, show selection and feedback
+    if(answered!==null && answered!==undefined){
+      const optBtns = $$(".opt", optionsWrap);
+      const correctIdx = q.correctIndex;
+      optBtns.forEach((b,i)=>{
+        if(i===correctIdx) b.classList.add("correct");
+        if(i===answered && answered!==correctIdx) b.classList.add("wrong");
+      });
+      if(instant){
+        showFeedback(answered===correctIdx, q, showExplain);
       }
     }
-    function save(){ saveProgress({picked:state.picked,answers:state.answers,idx:state.idx,showExplain:state.showExplain,showFeedback:state.showFeedback,t:Date.now()}); }
-    function setExplain(text){ if(!state.showExplain||!text){ explain.classList.add('hidden'); return; } explain.textContent=text; explain.classList.remove('hidden'); }
-    function setFeedback(text, ok){
-      if(!state.showFeedback||!text){ feedback.classList.add('hidden'); return; }
-      feedback.textContent=text; feedback.classList.remove('hidden');
-      feedback.style.borderColor = ok ? 'rgba(52,211,153,.35)' : 'rgba(251,113,133,.35)';
-      feedback.style.background = ok ? 'rgba(52,211,153,.10)' : 'rgba(251,113,133,.10)';
+
+    prevQBtn.disabled = state.idx===0;
+    nextQBtn.disabled = (state.answers[state.idx]===null || state.answers[state.idx]===undefined) ? true : false;
+    finishBtn.style.display = (state.idx===selected.length-1 ? "inline-flex" : "none");
+    nextQBtn.style.display = (state.idx===selected.length-1 ? "none" : "inline-flex");
+
+    setProgress();
+    updateNavStyles();
+    persistState();
+  }
+
+  function showFeedback(isCorrect, q, showExplain){
+    feedback.classList.add("show");
+    if(isCorrect){
+      fbTitle.textContent = `✅ صحيح يا ${profile.name}`;
+      fbDesc.textContent = showExplain ? q.explain_ar : "ممتاز! كمل على نفس التركيز.";
+    }else{
+      const correct = q.options[q.correctIndex];
+      fbTitle.textContent = `❌ مو مشكلة يا ${profile.name}`;
+      fbDesc.textContent = showExplain ? `الجواب الصحيح: ${correct}\n\n${q.explain_ar}` : `الجواب الصحيح: ${correct}`;
+    }
+  }
+
+  function chooseAnswer(optIdx){
+    const q = selected[state.idx];
+    const instant = state.settings.instantCheck;
+    const showExplain = state.settings.showExplain;
+
+    state.answers[state.idx] = optIdx;
+
+    // Update option styles
+    const optBtns = $$(".opt", optionsWrap);
+    optBtns.forEach((b,i)=>{
+      b.disabled = true;
+      if(i===q.correctIndex) b.classList.add("correct");
+      if(i===optIdx && optIdx!==q.correctIndex) b.classList.add("wrong");
+    });
+
+    if(instant){
+      showFeedback(optIdx===q.correctIndex, q, showExplain);
     }
 
-    function render(){
-      const q=state.picked[state.idx];
-      qTotal.textContent=String(state.picked.length);
-      qIndex.textContent=String(state.idx+1);
-      qSection.textContent=`${sectionArabic(q.section)} • صعوبة ${q.difficulty||3}/5`;
-      qPrompt.textContent=q.prompt;
-      bar.style.width=`${Math.round((state.idx/state.picked.length)*100)}%`;
+    nextQBtn.disabled = false;
+    updateNavStyles();
+    persistState();
+  }
 
-      const chosen=state.answers[state.idx];
-      options.innerHTML='';
-      q.options.forEach((t,i)=>{
-        const div=document.createElement('div'); div.className='opt'; div.textContent=t;
-        if(chosen===i) div.classList.add('sel');
-        if(chosen!==null){
-          if(i===q.correctIndex) div.classList.add('ok');
-          else if(i===chosen && i!==q.correctIndex) div.classList.add('bad');
+  function goTo(i){
+    state.idx = clamp(i, 0, selected.length-1);
+    renderQuestion();
+  }
+
+  function next(){
+    if(state.idx < selected.length-1){
+      state.idx++;
+      renderQuestion();
+    }
+  }
+
+  function prev(){
+    if(state.idx > 0){
+      state.idx--;
+      renderQuestion();
+    }
+  }
+
+  function computeScore(){
+    let correct=0;
+    const bySection = {};
+    selected.forEach((q,i)=>{
+      const a = state.answers[i];
+      const ok = (a!==null && a!==undefined && a===q.correctIndex);
+      if(ok) correct++;
+      bySection[q.section] = bySection[q.section] || { total:0, correct:0 };
+      bySection[q.section].total++;
+      if(ok) bySection[q.section].correct++;
+    });
+    const total = selected.length;
+    const pct = Math.round((correct/total)*100);
+
+    const sectionScores = Object.entries(bySection).map(([k,v])=>({
+      section:k, pct: Math.round((v.correct/v.total)*100), ...v
+    })).sort((a,b)=>a.pct-b.pct);
+
+    const weak = sectionScores.slice(0,2).map(x=>x.section);
+
+    let level = "مبتدئ";
+    if(pct >= 80) level = "متقدم";
+    else if(pct >= 60) level = "متوسط";
+    else if(pct >= 40) level = "مبتدئ-متوسط";
+
+    return { total, correct, pct, bySection, weak, level, sectionScores };
+  }
+
+  function finish(){
+    const score = computeScore();
+    const result = {
+      id: now(),
+      createdAt: new Date().toISOString(),
+      seed: state.seed,
+      profile,
+      questionIds: state.questionIds,
+      answers: state.answers,
+      score,
+      note: "هذه نتيجة تدريبية (مؤشر مستوى) وليست درجة رسمية."
+    };
+
+    const hist = storage.get("results_history", []);
+    hist.unshift(result);
+    storage.set("results_history", hist.slice(0, 25));
+    storage.set("last_result", result);
+
+    storage.set("last_full_test_at", now());
+
+    clearState();
+    toast("تم حفظ نتيجتك ✅");
+    window.setTimeout(()=> window.location.href = "./results.html", 250);
+  }
+
+  function startNewTest(){
+    const rem = cooldownRemaining();
+    if(rem>0){
+      toast("الاختبار الكامل محاولة واحدة كل 24 ساعة. سوّي كويزات لين يفتح لك 👌");
+      return;
+    }
+
+    profile = readForm();
+    saveProfile(profile);
+
+    const seed = now();
+    loadBank().then(all=>{
+      selected = chooseQuestions(all, CFG.test.sectionQuotas, seed);
+      state = {
+        seed,
+        questionIds: selected.map(q=>q.id),
+        answers: Array(selected.length).fill(null),
+        idx: 0,
+        settings: {
+          instantCheck: toggleInstantWizard ? toggleInstantWizard.checked : true,
+          showExplain: toggleExplainWizard ? toggleExplainWizard.checked : true
         }
-        div.addEventListener('click', ()=>{
-          state.answers[state.idx]=i;
-          const ok=i===q.correctIndex;
-          const name=(getUser()?.fullName||'يا بطل');
-          setFeedback(ok ? `ممتاز ${name} ✅` : `قريب يا ${name}… ركّز 👌`, ok);
-          setExplain(q.explain_ar||'');
-          renderGrid(); render(); save();
-        });
-        options.appendChild(div);
-      });
+      };
+      persistState();
+      beginTestUI();
+    }).catch(()=>{
+      toast("تعذر تحميل بنك الأسئلة. تأكد من رفع الملفات صح.");
+    });
+  }
 
-      prevBtn.disabled = state.idx===0;
-      nextBtn.disabled = state.idx===state.picked.length-1;
-      finishBtn.classList.toggle('hidden', state.idx!==state.picked.length-1);
+  function resumeExisting(existing){
+    profile = storage.get("profile", readForm());
+    state = existing;
 
-      if(chosen!==null){
-        const ok=chosen===q.correctIndex;
-        setFeedback(ok?'ممتاز ✅':'قريب…', ok);
-        setExplain(q.explain_ar||'');
-      } else { feedback.classList.add('hidden'); explain.classList.add('hidden'); }
-
-      toggleExplain.textContent = state.showExplain ? 'إخفاء الشرح' : 'إظهار الشرح';
-      toggleFeedback.textContent = state.showFeedback ? 'إخفاء رسائل التشجيع' : 'إظهار رسائل التشجيع';
-    }
-
-    function startNew(user){
-      if(cooldownRemaining()>0 && !loadProgress()){
-        window.AYED_UTILS.toast('الاختبار الكامل متاح مرة كل 24 ساعة. استخدم الكويزات الآن ✅');
+    loadBank().then(all=>{
+      const map = new Map(all.map(q=>[q.id,q]));
+      selected = existing.questionIds.map(id=>map.get(id)).filter(Boolean);
+      if(!selected.length){
+        toast("ملفات الأسئلة تغيرت — بنبدأ اختبار جديد.");
+        clearState();
         return;
       }
-      state.picked=pick(bank,CFG.test.questionsPerAttempt||50);
-      state.answers=new Array(state.picked.length).fill(null);
-      state.idx=0;
-      state.showExplain = CFG.test.explainDefault!==false;
-      state.showFeedback = true;
-      startCard.classList.add('hidden');
-      testCard.classList.remove('hidden');
-      renderGrid(); render(); save();
-    }
+      while(state.answers.length < selected.length) state.answers.push(null);
 
-    $('#startTest').addEventListener('click', (e)=>{
-      e.preventDefault();
-      const fd=new FormData(form);
-      const user={
-        fullName:(fd.get('fullName')||'').trim(),
-        goal:fd.get('goal')||'',
-        region:fd.get('region')||'',
-        whenExam:fd.get('whenExam')||'',
-        testedBefore:fd.get('testedBefore')||'no',
-        prevScore:fd.get('prevScore')||'',
-        targetScore:fd.get('targetScore')||'',
-        weakGuess:fd.get('weakGuess')||'auto',
-        studyMinutes:fd.get('studyMinutes')||'',
-        bestTime:fd.get('bestTime')||'',
-        eduStage:fd.get('eduStage')||'',
-        uniYear:fd.get('uniYear')||'',
-        major:(fd.get('major')||'').trim(),
-        prefers:fd.get('prefers')||'',
-        triedCourses:fd.get('triedCourses')||'',
-        painPoints:fd.getAll('painPoints'),
-        heardFrom:fd.get('heardFrom')||'',
-        notes:(fd.get('notes')||'').trim()
-      };
-      if(!user.fullName){ window.AYED_UTILS.toast('اكتب اسمك أولاً 👌'); return; }
-      setUser(user);
-      startNew(user);
-    });
-
-    const prog=loadProgress();
-    if(prog?.picked && Array.isArray(prog.answers)){
-      resumeBtn.classList.remove('hidden');
-      resumeBtn.addEventListener('click',(e)=>{
-        e.preventDefault();
-        state.picked=prog.picked; state.answers=prog.answers; state.idx=prog.idx||0;
-        state.showExplain=prog.showExplain??true; state.showFeedback=prog.showFeedback??true;
-        startCard.classList.add('hidden'); testCard.classList.remove('hidden');
-        renderGrid(); render();
-      });
-    }
-
-    toggleExplain.addEventListener('click', ()=>{ state.showExplain=!state.showExplain; save(); render(); });
-    toggleFeedback.addEventListener('click', ()=>{ state.showFeedback=!state.showFeedback; save(); render(); });
-
-    prevBtn.addEventListener('click', ()=>{ if(state.idx>0){ state.idx--; renderGrid(); render(); save(); }});
-    nextBtn.addEventListener('click', ()=>{
-      if(state.answers[state.idx]===null){ window.AYED_UTILS.toast('اختر إجابة أولاً ✅'); return; }
-      if(state.idx<state.picked.length-1){ state.idx++; renderGrid(); render(); save(); }
-    });
-
-    finishBtn.addEventListener('click', ()=>{
-      if(state.answers[state.idx]===null){ window.AYED_UTILS.toast('اختر إجابة للسؤال الأخير ✅'); return; }
-      const b=breakdown(state.picked,state.answers);
-      let correct=0; state.picked.forEach((q,i)=>{ if(state.answers[i]===q.correctIndex) correct++; });
-      const pct=Math.round((correct/state.picked.length)*100);
-      const lvl=levelFor(pct);
-      const user=getUser()||{};
-      const days=getPlanDays(user.whenExam);
-      const focus=focusFrom(b);
-      const plan=planText(user,focus,days);
-      const table=buildTable(days,user);
-      setResult({at:Date.now(),scorePct:pct,correct,total:state.picked.length,level:lvl,breakdown:b,focus,planDays:days,planText:plan,table,user});
-      setCooldownNow(); clearProgress(); location.href='results.html';
+      // Ensure toggles sync
+      beginTestUI(true);
     });
   }
 
-  document.addEventListener('DOMContentLoaded', run);
+  function beginTestUI(isResume=false){
+    if(wizard) wizard.style.display = "none";
+    if(testShell) testShell.style.display = "grid";
+    if(isResume) toast("تم استكمال محاولتك السابقة ✅");
+    renderNav();
+    renderQuestion();
+  }
+
+  // ----- Events -----
+  function init(){
+    initStepper();
+    let stepIdx = 0;
+    showStep(stepIdx);
+
+    nextBtn && nextBtn.addEventListener("click", () => {
+      profile = readForm();
+      saveProfile(profile);
+      stepIdx = clamp(stepIdx+1, 0, steps.length-1);
+      showStep(stepIdx);
+    });
+    prevBtn && prevBtn.addEventListener("click", () => {
+      stepIdx = clamp(stepIdx-1, 0, steps.length-1);
+      showStep(stepIdx);
+    });
+
+    const edu = $$('input[name="educationStage"]');
+    edu.forEach(r => r.addEventListener("change", () => {
+      const show = document.querySelector('input[name="educationStage"]:checked')?.value === "university";
+      const box = $("#uniBox");
+      if(box) box.style.display = show ? "block" : "none";
+    }));
+
+    const tried = $$('input[name="triedBefore"]');
+    tried.forEach(r => r.addEventListener("change", () => {
+      const v = document.querySelector('input[name="triedBefore"]:checked')?.value;
+      const box = $("#scoresBox");
+      if(box) box.style.display = (v==="yes") ? "grid" : "none";
+    }));
+
+    startBtn && startBtn.addEventListener("click", startNewTest);
+
+    // Test toggles
+    toggleInstantTest && toggleInstantTest.addEventListener("change", () => {
+      if(state){
+        state.settings.instantCheck = toggleInstantTest.checked;
+        persistState();
+        renderQuestion();
+      }
+    });
+    toggleExplainTest && toggleExplainTest.addEventListener("change", () => {
+      if(state){
+        state.settings.showExplain = toggleExplainTest.checked;
+        persistState();
+        renderQuestion();
+      }
+    });
+
+    nextQBtn && nextQBtn.addEventListener("click", next);
+    prevQBtn && prevQBtn.addEventListener("click", prev);
+    finishBtn && finishBtn.addEventListener("click", finish);
+
+    const saved = loadProfile();
+    if(saved?.name) $("#name").value = saved.name;
+
+    const existing = loadState();
+    if(existing && existing.questionIds && existing.answers){
+      const resumeBox = $("#resumeBox");
+      if(resumeBox) resumeBox.style.display = "block";
+      $("#resumeYes")?.addEventListener("click", () => resumeExisting(existing));
+      $("#resumeNo")?.addEventListener("click", () => { clearState(); toast("تم بدء إعداد جديد"); });
+    }
+
+    updateCooldownUI();
+    window.setInterval(updateCooldownUI, 1000);
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
 })();
