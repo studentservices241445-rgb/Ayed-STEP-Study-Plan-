@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>طباعة الخطة — أكاديمية عايد</title>
+  <style>
+    body{font-family:"Tajawal","Cairo",Arial,sans-serif;margin:24px;color:#111}
+    h1{margin:0 0 6px}.muted{color:#555}
+    .card{border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin:12px 0}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #e5e7eb;padding:10px;text-align:right;vertical-align:top}
+    th{background:#fafafa}
+    .brand{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#fff7db;border:1px solid #f0d88c}
+    @media print{#printBtn{display:none}}
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <div>
+      <div class="badge">﴿وَقُل رَّبِّ زِدْنِي عِلْمًا﴾</div>
+      <h1>أكاديمية عايد — خطة مذاكرة STEP</h1>
+      <div class="muted">«احرص على ما ينفعك واستعن بالله ولا تعجز»</div>
+    </div>
+    <div class="muted">2026</div>
+  </div>
+
+  <div class="card">
+    <b>الاسم:</b> <span id="pName"></span><br>
+    <b>النتيجة:</b> <span id="pScore"></span> — <b>المستوى:</b> <span id="pLevel"></span><br>
+    <b>التركيز:</b> <span id="pFocus"></span> — <b>مدة الخطة:</b> <span id="pDays"></span> يوم
+  </div>
+
+  <div class="card"><b>نص الخطة</b><pre id="pText" style="white-space:pre-wrap;font-family:inherit;margin:10px 0 0"></pre></div>
+
+  <div class="card">
+    <b>الجدول اليومي</b>
+    <table><thead><tr><th>اليوم</th><th>الوقت</th><th>المهمة</th></tr></thead><tbody id="pTable"></tbody></table>
+  </div>
+
+  <div class="muted">رابط البرنامج: <span id="pUrl"></span></div>
+  <button id="printBtn" style="margin-top:14px;padding:10px 12px;border-radius:12px;border:1px solid #ddd;background:#111;color:#fff;cursor:pointer">طباعة / حفظ PDF</button>
+  <script src="assets/print.js"></script>
+</body>
+</html>

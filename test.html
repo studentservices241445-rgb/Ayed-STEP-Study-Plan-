@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0B1220">
+  <title>الاختبار — أكاديمية عايد</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <div class="nav">
+      <a class="brand" href="index.html" aria-label="الرئيسية">
+        <div class="mark" aria-hidden="true"></div>
+        <div class="txt">
+          <b>أكاديمية عايد الرسمية</b>
+          <span>برنامج تحديد مستوى STEP (مجاني)</span>
+        </div>
+      </a>
+      <div class="actions">
+        <button class="btn iconbtn" id="menuBtn" aria-label="القائمة">☰</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="panel">
+    <div class="top">
+      <b>القائمة</b>
+      <button class="btn small" id="drawerClose">إغلاق</button>
+    </div>
+    <a href="index.html">الرئيسية</a>
+    <a href="test.html">ابدأ الاختبار</a>
+    <a href="results.html">النتيجة والخطة</a>
+    <a href="quiz.html">كويزات سريعة</a>
+    <a href="progress.html">سجلّي</a>
+    <a href="faq.html">الأسئلة الشائعة</a>
+    <a href="support.html">الدعم</a>
+    <a href="privacy.html">الخصوصية</a>
+    <a href="terms.html">الشروط</a>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="pop" id="pop" aria-live="polite"><div class="box"></div><div class="meta"></div></div>
+
+<button class="chatfab" id="chatFab" aria-label="مساعد أكاديمية عايد">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3H4a2 2 0 0 0-2 2v14l4-3h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/></svg>
+</button>
+<div class="chatpanel" id="chatPanel" aria-hidden="true">
+  <div class="head">
+    <div><b id="chatTitle">مساعد</b><span id="chatStatus">متصل</span></div>
+    <button class="btn small" id="chatClose">إغلاق</button>
+  </div>
+  <div class="body">
+    <div class="chatlog" id="chatLog"></div>
+    <div class="quickchips" id="chatChips"></div>
+    <div class="chatrow">
+      <input class="input" id="chatInput" placeholder="اكتب سؤالك هنا…" />
+      <button class="btn gold" id="chatSend">إرسال</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/site-data.js"></script>
+<script src="assets/app.js"></script>
+
+<main class="container" style="padding:16px 0 20px">
+  <div class="card pad" id="lockedState" style="margin-bottom:14px;display:none">
+    <b>ملاحظة: الاختبار الكامل متاح مرة كل 24 ساعة</b>
+    <div class="p" style="margin-top:6px">الوقت المتبقي: <b id="cooldownTime">—</b> — تقدر تستخدم الكويزات الآن ✅</div>
+  </div>
+
+  <div class="card pad" id="startCard">
+    <h1 class="h2">قبل ما نبدأ</h1>
+    <p class="p">جاوب الأسئلة التالية عشان نطلع لك خطة وجدول يناسبون وقتك ووضعك.</p>
+
+    <form id="infoForm">
+      <div class="grid two">
+        <div><label class="label">اسمك</label><input class="input" name="fullName" id="fullName" placeholder="مثال: محمد" required></div>
+        <div><label class="label">هدفك من البرنامج</label>
+          <select class="select" name="goal"><option value="plan">أبغى خطة وجدول مذاكرة</option><option value="level">أبغى أعرف مستواي</option><option value="both">الاثنين</option></select>
+        </div>
+        <div><label class="label">منطقتك / مدينة الاختبار</label><input class="input" name="region" placeholder="مثال: الرياض"></div>
+        <div><label class="label">متى اختبارك؟</label>
+          <select class="select" name="whenExam" id="whenExam">
+            <option value="24h">أقل من 24 ساعة</option><option value="3d">خلال 3 أيام</option><option value="7d">خلال 7 أيام</option>
+            <option value="30d" selected>خلال شهر</option><option value="not_booked">لسه ما حجزت</option>
+          </select>
+        </div>
+        <div><label class="label">هل اختبرت STEP قبل؟</label>
+          <select class="select" name="testedBefore" id="testedBefore"><option value="no" selected>لا</option><option value="yes">نعم</option></select>
+        </div>
+        <div id="prevScoreWrap" class="hidden"><label class="label">كم درجتك السابقة؟</label><input class="input" name="prevScore" id="prevScore" placeholder="مثال: 68"></div>
+        <div id="targetScoreWrap" class="hidden"><label class="label">كم درجتك المستهدفة؟</label><input class="input" name="targetScore" id="targetScore" placeholder="مثال: 85"></div>
+        <div><label class="label">تتوقع أضعف قسم عندك؟</label>
+          <select class="select" name="weakGuess" id="weakGuess">
+            <option value="auto" selected>خل الاختبار يحدد</option><option value="Grammar">القواعد</option><option value="Reading">القراءة</option>
+            <option value="Listening">الاستماع</option><option value="Vocabulary">المفردات</option>
+          </select>
+          <div class="help hidden" id="weakNote">تمام — بنعتمد على النتيجة عشان نحدد بدقة.</div>
+        </div>
+        <div><label class="label">وقت المذاكرة اليومي</label>
+          <select class="select" name="studyMinutes" id="studyMinutes"><option value="15-30">15–30 دقيقة</option><option value="30-60" selected>30–60 دقيقة</option><option value="60-90">60–90 دقيقة</option><option value="90+">أكثر من 90 دقيقة</option></select>
+        </div>
+        <div><label class="label">أفضل وقت للمذاكرة</label>
+          <select class="select" name="bestTime" id="bestTime"><option value="قبل الدوام/الدراسة">قبل الدوام/الدراسة</option><option value="بعد المغرب" selected>بعد المغرب</option><option value="بعد العشاء">بعد العشاء</option><option value="آخر الليل">آخر الليل</option><option value="حسب ظروفي">حسب ظروفي</option></select>
+        </div>
+        <div><label class="label">مرحلتك</label>
+          <select class="select" name="eduStage" id="eduStage"><option value="" selected>اختر</option><option value="high_school">ثانوي</option><option value="university">جامعي</option><option value="postgrad">دراسات عليا</option><option value="graduate">متخرج</option><option value="employee">موظف</option><option value="other">أخرى</option></select>
+        </div>
+        <div id="uniWrap" class="hidden"><label class="label">مستواك الجامعي</label>
+          <select class="select" name="uniYear" id="uniYear"><option value="">مستجد</option><option value="2">سنة 2</option><option value="3">سنة 3</option><option value="4">سنة 4</option><option value="5">سنة 5+</option></select>
+        </div>
+        <div><label class="label">تخصصك (اختياري)</label><input class="input" name="major" id="major" placeholder="مثال: تمريض / هندسة / قانون…"></div>
+        <div><label class="label">طريقة المذاكرة المفضلة</label>
+          <select class="select" name="prefers" id="prefers"><option value="short_videos" selected>مقاطع قصيرة منظمة + تمارين</option><option value="live">شرح مباشر</option><option value="files_only">ملفات + كويزات فقط</option><option value="mixed">كلها مع بعض</option></select>
+        </div>
+        <div><label class="label">هل جربت دورة/منصة قبل؟</label>
+          <select class="select" name="triedCourses" id="triedCourses"><option value="none" selected>لا</option><option value="ayed">دورة أكاديمية عايد</option><option value="other">منصة/دورة أخرى</option></select>
+        </div>
+      </div>
+
+      <hr class="sep">
+      <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
+        <b>وش اللي كان يزعجك في المصادر السابقة؟ (اختياري)</b>
+        <div class="grid two" style="margin-top:10px">
+          <label class="pill"><input type="checkbox" name="painPoints" value="no_plan"> ما فيه خطة واضحة</label>
+          <label class="pill"><input type="checkbox" name="painPoints" value="too_much"> محتوى كثير ومشتت</label>
+          <label class="pill"><input type="checkbox" name="painPoints" value="slow_support"> الدعم بطيء</label>
+          <label class="pill"><input type="checkbox" name="painPoints" value="not_updated"> ما فيه تحديثات/نماذج</label>
+          <label class="pill"><input type="checkbox" name="painPoints" value="weak_explain"> الشرح غير واضح</label>
+          <label class="pill"><input type="checkbox" name="painPoints" value="no_follow"> ما فيه متابعة</label>
+        </div>
+      </div>
+
+      <div class="grid two" style="margin-top:14px">
+        <div><label class="label">من وين سمعت عن البرنامج؟</label>
+          <select class="select" name="heardFrom" id="heardFrom"><option value="telegram">تيليجرام</option><option value="friend" selected>صديق/ة</option><option value="twitter">X</option><option value="snap">سناب</option><option value="search">بحث</option><option value="other">أخرى</option></select>
+        </div>
+        <div><label class="label">ملاحظات إضافية (اختياري)</label><textarea class="textarea" name="notes" id="notes" rows="3" placeholder="مثال: اختباري صباح… أبغى خطة أخف."></textarea></div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+        <button class="btn gold" id="startTest">ابدأ الاختبار</button>
+        <button class="btn hidden" id="resumeTest">أكمل من آخر نقطة</button>
+        <a class="btn ghost" href="quiz.html">بدون اختبار كامل؟ سوّي كويز</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card pad hidden" id="testCard">
+    <div class="badge">الاختبار الكامل — 50 سؤال</div>
+    <div class="qhead"><div class="qmeta">السؤال <b id="qIndex">1</b>/<b id="qTotal">50</b></div><div class="qmeta" id="qSection">—</div></div>
+    <div class="progress" style="margin-top:10px"><i id="bar"></i></div>
+    <div class="quicknav"><a href="#q">السؤال</a><a href="#grid">التنقل</a><a href="#tools">الإعدادات</a></div>
+    <div id="q"></div>
+    <div class="qprompt" id="qPrompt">—</div>
+    <div class="opts" id="options"></div>
+    <div id="feedback" class="explain hidden"></div>
+    <div id="explain" class="explain hidden"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn" id="prevQ">السابق</button>
+      <button class="btn gold" id="nextQ">التالي</button>
+      <button class="btn gold hidden" id="finishTest">إنهاء الاختبار</button>
+    </div>
+
+    <hr class="sep">
+    <div id="tools"></div>
+    <div class="grid two">
+      <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
+        <b>إعدادات العرض</b>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn small" id="toggleExplain">إخفاء الشرح</button>
+          <button class="btn small" id="toggleFeedback">إخفاء رسائل التشجيع</button>
+        </div>
+      </div>
+      <div class="card pad" style="box-shadow:none;background:rgba(255,255,255,.04)">
+        <b>التنقل بين الأسئلة</b>
+        <div class="help" style="margin-top:6px">اضغط رقم السؤال للرجوع له (السؤال المجاوب يتلوّن).</div>
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div id="grid"></div>
+    <div id="qGridWrap" class="hidden"><div class="qgrid" id="qGrid"></div></div>
+  </div>
+</main>
+<script src="assets/test.js"></script>
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div>
+        <b>أكاديمية عايد الرسمية</b>
+        <div style="margin-top:6px">© 2026 — برنامج مجاني لتنظيم خطة STEP</div>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <a href="faq.html">الأسئلة الشائعة</a>
+        <a href="support.html">الدعم</a>
+        <a href="privacy.html">الخصوصية</a>
+        <a href="terms.html">الشروط</a>
+      </div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

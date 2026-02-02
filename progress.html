@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0B1220">
+  <title>سجلّي — أكاديمية عايد</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<header class="header">
+  <div class="container">
+    <div class="nav">
+      <a class="brand" href="index.html" aria-label="الرئيسية">
+        <div class="mark" aria-hidden="true"></div>
+        <div class="txt">
+          <b>أكاديمية عايد الرسمية</b>
+          <span>برنامج تحديد مستوى STEP (مجاني)</span>
+        </div>
+      </a>
+      <div class="actions">
+        <button class="btn iconbtn" id="menuBtn" aria-label="القائمة">☰</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="panel">
+    <div class="top">
+      <b>القائمة</b>
+      <button class="btn small" id="drawerClose">إغلاق</button>
+    </div>
+    <a href="index.html">الرئيسية</a>
+    <a href="test.html">ابدأ الاختبار</a>
+    <a href="results.html">النتيجة والخطة</a>
+    <a href="quiz.html">كويزات سريعة</a>
+    <a href="progress.html">سجلّي</a>
+    <a href="faq.html">الأسئلة الشائعة</a>
+    <a href="support.html">الدعم</a>
+    <a href="privacy.html">الخصوصية</a>
+    <a href="terms.html">الشروط</a>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="pop" id="pop" aria-live="polite"><div class="box"></div><div class="meta"></div></div>
+
+<button class="chatfab" id="chatFab" aria-label="مساعد أكاديمية عايد">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3H4a2 2 0 0 0-2 2v14l4-3h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/></svg>
+</button>
+<div class="chatpanel" id="chatPanel" aria-hidden="true">
+  <div class="head">
+    <div><b id="chatTitle">مساعد</b><span id="chatStatus">متصل</span></div>
+    <button class="btn small" id="chatClose">إغلاق</button>
+  </div>
+  <div class="body">
+    <div class="chatlog" id="chatLog"></div>
+    <div class="quickchips" id="chatChips"></div>
+    <div class="chatrow">
+      <input class="input" id="chatInput" placeholder="اكتب سؤالك هنا…" />
+      <button class="btn gold" id="chatSend">إرسال</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/site-data.js"></script>
+<script src="assets/app.js"></script>
+
+<main class="container" style="padding:16px 0 20px">
+  <div class="card pad">
+    <h1 class="h2">سجل النتائج</h1>
+    <p class="p">هنا تشوف آخر محاولاتك من هذا الجهاز.</p>
+    <div class="card pad hidden" id="cooldownBox" style="box-shadow:none;background:rgba(255,255,255,.04)">
+      <b>الوقت المتبقي للمحاولة القادمة</b>
+      <div class="p" style="margin-top:6px"><b id="cooldownTime">—</b></div>
+      <a class="btn gold" href="quiz.html" style="margin-top:10px">سوّي كويز الآن</a>
+    </div>
+    <div id="history" class="grid" style="margin-top:12px"></div>
+    <hr class="sep">
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn gold" href="test.html">ابدأ اختبار</a><button class="btn" id="clearAll">مسح بيانات هذا الجهاز</button></div>
+  </div>
+</main>
+<script src="assets/progress.js"></script>
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div>
+        <b>أكاديمية عايد الرسمية</b>
+        <div style="margin-top:6px">© 2026 — برنامج مجاني لتنظيم خطة STEP</div>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <a href="faq.html">الأسئلة الشائعة</a>
+        <a href="support.html">الدعم</a>
+        <a href="privacy.html">الخصوصية</a>
+        <a href="terms.html">الشروط</a>
+      </div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
